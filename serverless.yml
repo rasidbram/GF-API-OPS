@@ -1,0 +1,70 @@
+service: rashid-assign-gforces
+frameworkVersion: "3"
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-2
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - dynamodb:DescribeTable
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+          Resource: arn:aws:dynamodb:eu-west-2:*:*
+
+resources:
+    Resources:
+        TodosTable:
+            Type: "AWS::DynamoDB::Table"
+            DeletionPolicy: Retain
+            Properties:
+                AttributeDefinitions:
+                    - AttributeName: id
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: id
+                      KeyType: HASH
+                ProvisionedThroughput:
+                    ReadCapacityUnits: 1
+                    WriteCapacityUnits: 1
+                TimeToLiveSpecification:
+                    AttributeName: expiredAt
+                    Enabled: true
+                TableName: "carOrder"
+
+functions:
+    create:
+        handler: src/handler/createOrder.createOrder
+        events:
+            - http:
+                  path: order
+                  method: post
+                  cors: true
+
+    list:
+        handler: src/handler/listOrder.listOrder
+        events:
+            - http:
+                  path: order
+                  method: get
+                  cors: true
+
+    get:
+        handler: src/handler/getOrder.getOrder
+        events:
+            - http:
+                  path: order/{id}
+                  method: get
+                  cors: true
+
+    update:
+        handler: src/handler/updateOrder.updateOrder
+        events:
+            - http:
+                  path: order/{id}
+                  method: put
+                  cors: true
